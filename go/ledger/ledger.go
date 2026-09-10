@@ -13,6 +13,10 @@ type Entry struct {
 }
 
 func FormatLedger(currency string, locale string, entries []Entry) (string, error) {
+	if locale != "nl-NL" && locale != "en-US" {
+		return "", errors.New("")
+	}
+
 	var entriesCopy []Entry
 	entriesCopy = append([]Entry(nil), entries...)
 
@@ -56,9 +60,8 @@ func FormatLedger(currency string, locale string, entries []Entry) (string, erro
 			"Description" +
 			strings.Repeat(" ", 25-len("Description")) +
 			" | " + "Change" + strings.Repeat(" ", 13-len("Change")) + "\n"
-	} else {
-		return "", errors.New("")
 	}
+
 	// Parallelism, always a great idea
 	co := make(chan struct {
 		i int
