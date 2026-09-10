@@ -16,6 +16,9 @@ func FormatLedger(currency string, locale string, entries []Entry) (string, erro
 	if locale != "nl-NL" && locale != "en-US" {
 		return "", errors.New("")
 	}
+	if currency != "EUR" && currency != "USD" {
+		return "", errors.New("")
+	}
 
 	var entriesCopy []Entry
 	entriesCopy = append([]Entry(nil), entries...)
@@ -116,12 +119,6 @@ func FormatLedger(currency string, locale string, entries []Entry) (string, erro
 					a += "€"
 				} else if currency == "USD" {
 					a += "$"
-				} else {
-					co <- struct {
-						i int
-						s string
-						e error
-					}{e: errors.New("")}
 				}
 				a += " "
 				centsStr := strconv.Itoa(cents)
@@ -158,12 +155,6 @@ func FormatLedger(currency string, locale string, entries []Entry) (string, erro
 					a += "€"
 				} else if currency == "USD" {
 					a += "$"
-				} else {
-					co <- struct {
-						i int
-						s string
-						e error
-					}{e: errors.New("")}
 				}
 				centsStr := strconv.Itoa(cents)
 				switch len(centsStr) {
