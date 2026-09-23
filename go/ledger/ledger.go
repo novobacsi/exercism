@@ -67,8 +67,6 @@ func formatRow(entry Entry, locale string, currency string) (string, error) {
 	de := entry.Description
 	if len(de) > 25 {
 		de = de[:22] + "..."
-	} else {
-		de = fmt.Sprintf("%-25s", de)
 	}
 
 	negative := false
@@ -108,10 +106,6 @@ func formatRow(entry Entry, locale string, currency string) (string, error) {
 		} else {
 			a += " "
 		}
-	}
-	var al int
-	for range a {
-		al++
 	}
 
 	return fmt.Sprintf("%-10s | %-25s | %13s\n", d, de, a), nil
