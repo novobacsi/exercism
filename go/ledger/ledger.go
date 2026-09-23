@@ -2,6 +2,7 @@ package ledger
 
 import (
 	"errors"
+	"fmt"
 	"sort"
 	"strconv"
 	"strings"
@@ -39,19 +40,9 @@ func FormatLedger(currency string, locale string, entries []Entry) (string, erro
 
 	var s string
 	if locale == "nl-NL" {
-		s = "Datum" +
-			strings.Repeat(" ", 10-len("Datum")) +
-			" | " +
-			"Omschrijving" +
-			strings.Repeat(" ", 25-len("Omschrijving")) +
-			" | " + "Verandering" + strings.Repeat(" ", 13-len("Verandering")) + "\n"
+		s = fmt.Sprintf("%-10s | %-25s | %-13s\n", "Datum", "Omschrijving", "Verandering")
 	} else if locale == "en-US" {
-		s = "Date" +
-			strings.Repeat(" ", 10-len("Date")) +
-			" | " +
-			"Description" +
-			strings.Repeat(" ", 25-len("Description")) +
-			" | " + "Change" + strings.Repeat(" ", 13-len("Change")) + "\n"
+		s = fmt.Sprintf("%-10s | %-25s | %-13s\n", "Date", "Description", "Change")
 	}
 
 	// Parallelism, always a great idea
