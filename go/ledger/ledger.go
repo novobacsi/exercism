@@ -51,6 +51,7 @@ func FormatLedger(currency string, locale string, entries []Entry) (string, erro
 		s string
 		e error
 	})
+
 	for i, et := range entriesCopy {
 		go func(i int, entry Entry) {
 			if len(entry.Date) != 10 {
@@ -60,15 +61,15 @@ func FormatLedger(currency string, locale string, entries []Entry) (string, erro
 					e error
 				}{e: errors.New("")}
 			}
-			d1, d2, d3, d4, d5 := entry.Date[0:4], entry.Date[4], entry.Date[5:7], entry.Date[7], entry.Date[8:10]
-			if d2 != '-' {
+			entryYear, entryYearSeparator, entryMonth, entryMonthSeparator, entryDay := entry.Date[0:4], entry.Date[4], entry.Date[5:7], entry.Date[7], entry.Date[8:10]
+			if entryYearSeparator != '-' {
 				co <- struct {
 					i int
 					s string
 					e error
 				}{e: errors.New("")}
 			}
-			if d4 != '-' {
+			if entryMonthSeparator != '-' {
 				co <- struct {
 					i int
 					s string
@@ -79,22 +80,18 @@ func FormatLedger(currency string, locale string, entries []Entry) (string, erro
 			if len(de) > 25 {
 				de = de[:22] + "..."
 			} else {
-				de = de + strings.Repeat(" ", 25-len(de))
+				de = fmt.Sprintf("%-25s", de)
 			}
-			var d string
-			if locale == "nl-NL" {
-				d = d5 + "-" + d3 + "-" + d1
-			} else if locale == "en-US" {
-				d = d3 + "/" + d5 + "/" + d1
-			}
+
 			negative := false
 			cents := entry.Change
 			if cents < 0 {
 				cents = cents * -1
 				negative = true
 			}
-			var a string
+			var a, d string
 			if locale == "nl-NL" {
+				d = entryDay + "-" + entryMonth + "-" + entryYear
 				if currency == "EUR" {
 					a += "€"
 				} else if currency == "USD" {
@@ -128,6 +125,7 @@ func FormatLedger(currency string, locale string, entries []Entry) (string, erro
 				a += centsStr[len(centsStr)-2:]
 				a += " "
 			} else if locale == "en-US" {
+				d = entryMonth + "/" + entryDay + "/" + entryYear
 				if negative {
 					a += "("
 				}
