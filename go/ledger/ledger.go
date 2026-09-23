@@ -66,9 +66,9 @@ func formatRow(entry Entry, locale string, currency string) (string, error) {
 	if entryMonthSeparator != '-' {
 		return "", errors.New("invalid date format")
 	}
-	de := entry.Description
-	if len(de) > 25 {
-		de = de[:22] + "..."
+	description := entry.Description
+	if len(description) > 25 {
+		description = description[:22] + "..."
 	}
 
 	negative := false
@@ -77,32 +77,32 @@ func formatRow(entry Entry, locale string, currency string) (string, error) {
 		cents = cents * -1
 		negative = true
 	}
-	var a, d string
+	var amount, date string
 	if locale == "nl-NL" {
-		d = entryDay + "-" + entryMonth + "-" + entryYear
-		a += currencySymbols[currency]
-		a += " "
+		date = entryDay + "-" + entryMonth + "-" + entryYear
+		amount += currencySymbols[currency]
+		amount += " "
 
 		if negative {
-			a += "-"
+			amount += "-"
 		}
-		a += formatNumber(cents, ".", ",")
-		a += " "
+		amount += formatNumber(cents, ".", ",")
+		amount += " "
 	} else {
-		d = entryMonth + "/" + entryDay + "/" + entryYear
+		date = entryMonth + "/" + entryDay + "/" + entryYear
 		if negative {
-			a += "("
+			amount += "("
 		}
-		a += currencySymbols[currency]
-		a += formatNumber(cents, ",", ".")
+		amount += currencySymbols[currency]
+		amount += formatNumber(cents, ",", ".")
 		if negative {
-			a += ")"
+			amount += ")"
 		} else {
-			a += " "
+			amount += " "
 		}
 	}
 
-	return fmt.Sprintf("%-10s | %-25s | %13s\n", d, de, a), nil
+	return fmt.Sprintf("%-10s | %-25s | %13s\n", date, description, amount), nil
 }
 
 func formatNumber(cents int, thousandsSeparator, decimalSeparator string) string {
