@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"sort"
-	"strings"
 )
 
 type Entry struct {
@@ -44,62 +43,26 @@ func FormatLedger(currency string, locale string, entries []Entry) (string, erro
 		s = fmt.Sprintf("%-10s | %-25s | %-13s\n", "Date", "Description", "Change")
 	}
 
-	// Parallelism, always a great idea
-	co := make(chan struct {
-		i int
-		s string
-		e error
-	})
-
-	for i, et := range entriesCopy {
-		go func(i int, entry Entry) {
-			co = formatRow(i, entry, co, locale, currency)
-		}(i, et)
-	}
-	ss := make([]string, len(entriesCopy))
-	for range entriesCopy {
-		v := <-co
-		if v.e != nil {
-			return "", v.e
+	for _, entry := range entriesCopy {
+		row, err := formatRow(entry, locale, currency)
+		if err != nil {
+			return "", err
 		}
-		ss[v.i] = v.s
-	}
-	for i := range len(entriesCopy) {
-		s += ss[i]
+		s += row
 	}
 	return s, nil
 }
 
-func formatRow(i int, entry Entry, co chan struct {
-	i int
-	s string
-	e error
-}, locale string, currency string) chan struct {
-	i int
-	s string
-	e error
-} {
+func formatRow(entry Entry, locale string, currency string) (string, error) {
 	if len(entry.Date) != 10 {
-		co <- struct {
-			i int
-			s string
-			e error
-		}{e: errors.New("")}
+		return "", errors.New("")
 	}
 	entryYear, entryYearSeparator, entryMonth, entryMonthSeparator, entryDay := entry.Date[0:4], entry.Date[4], entry.Date[5:7], entry.Date[7], entry.Date[8:10]
 	if entryYearSeparator != '-' {
-		co <- struct {
-			i int
-			s string
-			e error
-		}{e: errors.New("")}
+		return "", errors.New("")
 	}
 	if entryMonthSeparator != '-' {
-		co <- struct {
-			i int
-			s string
-			e error
-		}{e: errors.New("")}
+		return "", errors.New("")
 	}
 	de := entry.Description
 	if len(de) > 25 {
@@ -150,13 +113,8 @@ func formatRow(i int, entry Entry, co chan struct {
 	for range a {
 		al++
 	}
-	co <- struct {
-		i int
-		s string
-		e error
-	}{i: i, s: d + strings.Repeat(" ", 10-len(d)) + " | " + de + " | " +
-		strings.Repeat(" ", 13-al) + a + "\n"}
-	return co
+
+	return fmt.Sprintf("%-10s | %-25s | %13s\n", d, de, a), nil
 }
 
 func formatNumber(cents int, thousandsSeparator, decimalSeparator string) string {
