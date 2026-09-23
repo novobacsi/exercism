@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"sort"
-	"strconv"
 	"strings"
 )
 
@@ -98,31 +97,11 @@ func FormatLedger(currency string, locale string, entries []Entry) (string, erro
 					a += "$"
 				}
 				a += " "
-				centsStr := strconv.Itoa(cents)
-				switch len(centsStr) {
-				case 1:
-					centsStr = "00" + centsStr
-				case 2:
-					centsStr = "0" + centsStr
-				}
-				rest := centsStr[:len(centsStr)-2]
-				var parts []string
-				for len(rest) > 3 {
-					parts = append(parts, rest[len(rest)-3:])
-					rest = rest[:len(rest)-3]
-				}
-				if len(rest) > 0 {
-					parts = append(parts, rest)
-				}
+
 				if negative {
 					a += "-"
 				}
-				for i := len(parts) - 1; i >= 0; i-- {
-					a += parts[i] + "."
-				}
-				a = a[:len(a)-1]
-				a += ","
-				a += centsStr[len(centsStr)-2:]
+				a += formatNumber(cents, ".", ",")
 				a += " "
 			} else if locale == "en-US" {
 				d = entryMonth + "/" + entryDay + "/" + entryYear
@@ -134,28 +113,7 @@ func FormatLedger(currency string, locale string, entries []Entry) (string, erro
 				} else if currency == "USD" {
 					a += "$"
 				}
-				centsStr := strconv.Itoa(cents)
-				switch len(centsStr) {
-				case 1:
-					centsStr = "00" + centsStr
-				case 2:
-					centsStr = "0" + centsStr
-				}
-				rest := centsStr[:len(centsStr)-2]
-				var parts []string
-				for len(rest) > 3 {
-					parts = append(parts, rest[len(rest)-3:])
-					rest = rest[:len(rest)-3]
-				}
-				if len(rest) > 0 {
-					parts = append(parts, rest)
-				}
-				for i := len(parts) - 1; i >= 0; i-- {
-					a += parts[i] + ","
-				}
-				a = a[:len(a)-1]
-				a += "."
-				a += centsStr[len(centsStr)-2:]
+				a += formatNumber(cents, ",", ".")
 				if negative {
 					a += ")"
 				} else {
@@ -186,4 +144,24 @@ func FormatLedger(currency string, locale string, entries []Entry) (string, erro
 		s += ss[i]
 	}
 	return s, nil
+}
+
+func formatNumber(cents int, thousandsSeparator, decimalSeparator string) string {
+	centsStr := fmt.Sprintf("%03d", cents)
+
+	rest := centsStr[:len(centsStr)-2]
+	var parts []string
+	for len(rest) > 3 {
+		parts = append(parts, rest[len(rest)-3:])
+		rest = rest[:len(rest)-3]
+	}
+	parts = append(parts, rest)
+
+	var out string
+	for g := len(parts) - 1; g >= 0; g-- {
+		out += parts[g] + thousandsSeparator
+	}
+	out = out[:len(out)-len(thousandsSeparator)]
+
+	return out + decimalSeparator + centsStr[len(centsStr)-2:]
 }
