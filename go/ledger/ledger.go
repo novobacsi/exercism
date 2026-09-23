@@ -53,83 +53,7 @@ func FormatLedger(currency string, locale string, entries []Entry) (string, erro
 
 	for i, et := range entriesCopy {
 		go func(i int, entry Entry) {
-			if len(entry.Date) != 10 {
-				co <- struct {
-					i int
-					s string
-					e error
-				}{e: errors.New("")}
-			}
-			entryYear, entryYearSeparator, entryMonth, entryMonthSeparator, entryDay := entry.Date[0:4], entry.Date[4], entry.Date[5:7], entry.Date[7], entry.Date[8:10]
-			if entryYearSeparator != '-' {
-				co <- struct {
-					i int
-					s string
-					e error
-				}{e: errors.New("")}
-			}
-			if entryMonthSeparator != '-' {
-				co <- struct {
-					i int
-					s string
-					e error
-				}{e: errors.New("")}
-			}
-			de := entry.Description
-			if len(de) > 25 {
-				de = de[:22] + "..."
-			} else {
-				de = fmt.Sprintf("%-25s", de)
-			}
-
-			negative := false
-			cents := entry.Change
-			if cents < 0 {
-				cents = cents * -1
-				negative = true
-			}
-			var a, d string
-			if locale == "nl-NL" {
-				d = entryDay + "-" + entryMonth + "-" + entryYear
-				if currency == "EUR" {
-					a += "€"
-				} else if currency == "USD" {
-					a += "$"
-				}
-				a += " "
-
-				if negative {
-					a += "-"
-				}
-				a += formatNumber(cents, ".", ",")
-				a += " "
-			} else if locale == "en-US" {
-				d = entryMonth + "/" + entryDay + "/" + entryYear
-				if negative {
-					a += "("
-				}
-				if currency == "EUR" {
-					a += "€"
-				} else if currency == "USD" {
-					a += "$"
-				}
-				a += formatNumber(cents, ",", ".")
-				if negative {
-					a += ")"
-				} else {
-					a += " "
-				}
-			}
-			var al int
-			for range a {
-				al++
-			}
-			co <- struct {
-				i int
-				s string
-				e error
-			}{i: i, s: d + strings.Repeat(" ", 10-len(d)) + " | " + de + " | " +
-				strings.Repeat(" ", 13-al) + a + "\n"}
+			co = formatRow(i, entry, co, locale, currency)
 		}(i, et)
 	}
 	ss := make([]string, len(entriesCopy))
@@ -144,6 +68,95 @@ func FormatLedger(currency string, locale string, entries []Entry) (string, erro
 		s += ss[i]
 	}
 	return s, nil
+}
+
+func formatRow(i int, entry Entry, co chan struct {
+	i int
+	s string
+	e error
+}, locale string, currency string) chan struct {
+	i int
+	s string
+	e error
+} {
+	if len(entry.Date) != 10 {
+		co <- struct {
+			i int
+			s string
+			e error
+		}{e: errors.New("")}
+	}
+	entryYear, entryYearSeparator, entryMonth, entryMonthSeparator, entryDay := entry.Date[0:4], entry.Date[4], entry.Date[5:7], entry.Date[7], entry.Date[8:10]
+	if entryYearSeparator != '-' {
+		co <- struct {
+			i int
+			s string
+			e error
+		}{e: errors.New("")}
+	}
+	if entryMonthSeparator != '-' {
+		co <- struct {
+			i int
+			s string
+			e error
+		}{e: errors.New("")}
+	}
+	de := entry.Description
+	if len(de) > 25 {
+		de = de[:22] + "..."
+	} else {
+		de = fmt.Sprintf("%-25s", de)
+	}
+
+	negative := false
+	cents := entry.Change
+	if cents < 0 {
+		cents = cents * -1
+		negative = true
+	}
+	var a, d string
+	if locale == "nl-NL" {
+		d = entryDay + "-" + entryMonth + "-" + entryYear
+		if currency == "EUR" {
+			a += "€"
+		} else if currency == "USD" {
+			a += "$"
+		}
+		a += " "
+
+		if negative {
+			a += "-"
+		}
+		a += formatNumber(cents, ".", ",")
+		a += " "
+	} else if locale == "en-US" {
+		d = entryMonth + "/" + entryDay + "/" + entryYear
+		if negative {
+			a += "("
+		}
+		if currency == "EUR" {
+			a += "€"
+		} else if currency == "USD" {
+			a += "$"
+		}
+		a += formatNumber(cents, ",", ".")
+		if negative {
+			a += ")"
+		} else {
+			a += " "
+		}
+	}
+	var al int
+	for range a {
+		al++
+	}
+	co <- struct {
+		i int
+		s string
+		e error
+	}{i: i, s: d + strings.Repeat(" ", 10-len(d)) + " | " + de + " | " +
+		strings.Repeat(" ", 13-al) + a + "\n"}
+	return co
 }
 
 func formatNumber(cents int, thousandsSeparator, decimalSeparator string) string {
