@@ -12,16 +12,18 @@ type Entry struct {
 	Change      int // in cents
 }
 
+var currencySymbols = map[string]string{"EUR": "€", "USD": "$"}
+
 func FormatLedger(currency string, locale string, entries []Entry) (string, error) {
 	if locale != "nl-NL" && locale != "en-US" {
-		return "", errors.New("")
-	}
-	if currency != "EUR" && currency != "USD" {
-		return "", errors.New("")
+		return "", errors.New("invalid locale")
 	}
 
-	var entriesCopy []Entry
-	entriesCopy = append([]Entry(nil), entries...)
+	if _, ok := currencySymbols[currency]; !ok {
+		return "", errors.New("invalid currency")
+	}
+
+	entriesCopy := append([]Entry(nil), entries...)
 
 	sort.Slice(entriesCopy, func(i, j int) bool {
 		a, b := entriesCopy[i], entriesCopy[j]
@@ -39,7 +41,7 @@ func FormatLedger(currency string, locale string, entries []Entry) (string, erro
 	var s string
 	if locale == "nl-NL" {
 		s = fmt.Sprintf("%-10s | %-25s | %-13s\n", "Datum", "Omschrijving", "Verandering")
-	} else if locale == "en-US" {
+	} else {
 		s = fmt.Sprintf("%-10s | %-25s | %-13s\n", "Date", "Description", "Change")
 	}
 
@@ -55,14 +57,14 @@ func FormatLedger(currency string, locale string, entries []Entry) (string, erro
 
 func formatRow(entry Entry, locale string, currency string) (string, error) {
 	if len(entry.Date) != 10 {
-		return "", errors.New("")
+		return "", errors.New("invalid date format")
 	}
 	entryYear, entryYearSeparator, entryMonth, entryMonthSeparator, entryDay := entry.Date[0:4], entry.Date[4], entry.Date[5:7], entry.Date[7], entry.Date[8:10]
 	if entryYearSeparator != '-' {
-		return "", errors.New("")
+		return "", errors.New("invalid date format")
 	}
 	if entryMonthSeparator != '-' {
-		return "", errors.New("")
+		return "", errors.New("invalid date format")
 	}
 	de := entry.Description
 	if len(de) > 25 {
@@ -78,11 +80,7 @@ func formatRow(entry Entry, locale string, currency string) (string, error) {
 	var a, d string
 	if locale == "nl-NL" {
 		d = entryDay + "-" + entryMonth + "-" + entryYear
-		if currency == "EUR" {
-			a += "€"
-		} else if currency == "USD" {
-			a += "$"
-		}
+		a += currencySymbols[currency]
 		a += " "
 
 		if negative {
@@ -90,16 +88,12 @@ func formatRow(entry Entry, locale string, currency string) (string, error) {
 		}
 		a += formatNumber(cents, ".", ",")
 		a += " "
-	} else if locale == "en-US" {
+	} else {
 		d = entryMonth + "/" + entryDay + "/" + entryYear
 		if negative {
 			a += "("
 		}
-		if currency == "EUR" {
-			a += "€"
-		} else if currency == "USD" {
-			a += "$"
-		}
+		a += currencySymbols[currency]
 		a += formatNumber(cents, ",", ".")
 		if negative {
 			a += ")"
